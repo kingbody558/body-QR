@@ -6,7 +6,7 @@
   var DARK_COLOR = '#000000';
   var LIGHT_COLOR = '#ffffff';
   var DOWNLOAD_NAME = 'qr-code.png';
-
+  var LIVE_DELAY = 400;
   // ---------- Elements ----------
   var input = document.getElementById('input');
   var msg = document.getElementById('msg');
