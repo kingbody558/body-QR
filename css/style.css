@@ -1,11 +1,12 @@
 /* ---------- Theme variables ---------- */
 :root {
-  --bg: #eef2f7;
+ --bg: #f3efff;
+  --bg-gradient: linear-gradient(160deg, #f3efff 0%, #dff5f3 100%);
   --surface: #ffffff;
-  --ink: #14213d;
-  --muted: #5a6578;
-  --line: #c9d3e2;
-  --accent: #1d4ed8;
+  --ink: #241b3a;
+  --muted: #645c7e;
+  --line: #d9d0f0;
+  --accent: #7c3aed;
   --accent-ink: #ffffff;
   --err: #b42318;
   --radius: 10px;
