@@ -1,6 +1,6 @@
 /* ---------- Theme variables ---------- */
 :root {
- --bg: #f3efff;
+  --bg: #f3efff;
   --bg-gradient: linear-gradient(160deg, #f3efff 0%, #dff5f3 100%);
   --surface: #ffffff;
   --ink: #241b3a;
@@ -14,17 +14,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0e1626;
-    --surface: #17223a;
-    --ink: #e8eefc;
-    --muted: #9aa8c4;
-    --line: #2c3b5c;
-    --accent: #6c97ff;
-    --accent-ink: #0e1626;
+    --bg: #16112a;
+    --bg-gradient: linear-gradient(160deg, #16112a 0%, #0f2230 100%);
+    --surface: #211a3b;
+    --ink: #efeafc;
+    --muted: #a79fc4;
+    --line: #3a3160;
+    --accent: #a78bfa;
+    --accent-ink: #16112a;
     --err: #ff8a80;
   }
 }
-
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
