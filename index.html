@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR Code Maker</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <h1>QR code maker</h1>
+    <p class="sub">Paste a link or any text, then make a code you can scan.</p>
+
+    <div class="panel">
+      <label for="input">Link or text</label>
+      <textarea id="input" placeholder="https://example.com"></textarea>
+
+      <div class="row">
+        <button class="primary" id="make" type="button">Generate QR code</button>
+        <button id="clear" type="button">Clear</button>
+      </div>
+
+      <p class="msg" id="msg" role="alert"></p>
+
+      <div class="result" id="result" hidden>
+        <div class="qrbox" id="qr"></div>
+        <div class="row center">
+          <button id="download" type="button">Download PNG</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- QR library (loaded from CDN). Replace with a local copy if you need offline use. -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
