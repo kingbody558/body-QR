@@ -122,3 +122,20 @@ button.primary {
 .qrbox canvas { display: block; max-width: 100%; height: auto; }
 
 [hidden] { display: none !important; }
+/* MOD 2: pill buttons */
+button {
+  border-radius: 999px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+button:active {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  button { transition: none; }
+  button:hover { transform: none; }
+}
