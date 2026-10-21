@@ -22,6 +22,12 @@
     result.hidden = true;
   }
 
+// MOD 4: add https:// to things like "example.com"
+function normalizeLink(text) {
+  var looksLikeDomain = /^(?![a-z][a-z0-9+.-]*:)(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[\/?#]\S*)?$/i;
+  return looksLikeDomain.test(text) ? 'https://' + text : text;
+}
+  
   function reset() {
     msg.textContent = '';
     qrBox.innerHTML = '';
@@ -29,7 +35,7 @@
 
   // ---------- Actions ----------
   function generate() {
-    var text = input.value.trim();
+    var text = normalizeLink(input.value.trim());
     reset();
 
     if (!text) {
