@@ -15,7 +15,7 @@
   var makeBtn = document.getElementById('make');
   var clearBtn = document.getElementById('clear');
   var downloadBtn = document.getElementById('download');
-
+  var LIVE_DELAY = 400;
   // ---------- Helpers ----------
   function showError(text) {
     msg.textContent = text;
@@ -78,7 +78,12 @@
   makeBtn.addEventListener('click', generate);
   clearBtn.addEventListener('click', clearAll);
   downloadBtn.addEventListener('click', download);
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate();
-  });
-})();
+ input.addEventListener('input', function () {
+  clearTimeout(liveTimer);
+  if (!input.value.trim()) {
+    reset();
+    result.hidden = true;
+    return;
+  }
+  liveTimer = setTimeout(function () { generate(false); }, LIVE_DELAY);
+});
