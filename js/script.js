@@ -2,11 +2,11 @@
   'use strict';
 
   // ---------- Settings (edit these) ----------
-  var QR_SIZE = 240;                 // pixels
-  var DARK_COLOR = '#000000';
-  var LIGHT_COLOR = '#ffffff';
+  var QR_SIZE = 280;                // MOD 5: bigger code
   var DOWNLOAD_NAME = 'qr-code.png';
-  var LIVE_DELAY = 400;              // MOD 3: ms to wait after typing stops
+  var LIVE_DELAY = 400;             // MOD 3: ms to wait after typing stops
+  var HISTORY_KEY = 'qr-history';   // FEATURE 3
+  var MAX_HISTORY = 5;
 
   // ---------- Elements ----------
   var input = document.getElementById('input');
@@ -16,8 +16,14 @@
   var makeBtn = document.getElementById('make');
   var clearBtn = document.getElementById('clear');
   var downloadBtn = document.getElementById('download');
+  var copyBtn = document.getElementById('copy');                 // FEATURE 2
+  var fgInput = document.getElementById('fgColor');              // FEATURE 1
+  var bgInput = document.getElementById('bgColor');              // FEATURE 1
+  var historyBox = document.getElementById('historyBox');        // FEATURE 3
+  var historyList = document.getElementById('history');          // FEATURE 3
+  var clearHistoryBtn = document.getElementById('clearHistory'); // FEATURE 3
 
-  var liveTimer = null;              // MOD 3: this was missing
+  var liveTimer = null;
 
   // ---------- Helpers ----------
   function showError(text) {
@@ -30,14 +36,58 @@
     qrBox.innerHTML = '';
   }
 
+  function flash(btn, text) {
+    var old = btn.textContent;
+    btn.textContent = text;
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  }
+
   // MOD 4: add https:// to things like "example.com"
   function normalizeLink(text) {
     var looksLikeDomain = /^(?![a-z][a-z0-9+.-]*:)(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[\/?#]\S*)?$/i;
     return looksLikeDomain.test(text) ? 'https://' + text : text;
   }
 
+  // ---------- History (FEATURE 3) ----------
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch (e) { return []; }
+  }
+
+  function saveHistory(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+    catch (e) { /* storage unavailable: ignore */ }
+  }
+
+  function renderHistory() {
+    var list = loadHistory();
+    historyBox.hidden = list.length === 0;
+    historyList.innerHTML = '';
+    list.forEach(function (text) {
+      var li = document.createElement('li');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = text;
+      btn.title = text;
+      btn.addEventListener('click', function () {
+        input.value = text;
+        generate(false);
+      });
+      li.appendChild(btn);
+      historyList.appendChild(li);
+    });
+  }
+
+  function addHistory(text) {
+    var list = loadHistory().filter(function (t) { return t !== text; });
+    list.unshift(text);
+    saveHistory(list.slice(0, MAX_HISTORY));
+    renderHistory();
+  }
+
   // ---------- Actions ----------
-  function generate() {
+  // shouldSave = true only when the person clicks the button (not while typing)
+  function generate(shouldSave) {
     var text = normalizeLink(input.value.trim());
     reset();
 
@@ -55,11 +105,13 @@
         text: text,
         width: QR_SIZE,
         height: QR_SIZE,
-        colorDark: DARK_COLOR,
-        colorLight: LIGHT_COLOR,
+        colorDark: fgInput.value,    // FEATURE 1
+        colorLight: bgInput.value,   // FEATURE 1
         correctLevel: QRCode.CorrectLevel.M
       });
+      qrBox.style.background = bgInput.value;
       result.hidden = false;
+      if (shouldSave) addHistory(text);
     } catch (err) {
       showError('That text is too long for a QR code. Shorten it and try again.');
     }
@@ -83,23 +135,33 @@
     document.body.removeChild(a);
   }
 
-  // ---------- Events ----------
-  makeBtn.addEventListener('click', generate);
-  clearBtn.addEventListener('click', clearAll);
-  downloadBtn.addEventListener('click', download);
-
-  input.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate();
-  });
-
-  // MOD 3: live update while typing
-  input.addEventListener('input', function () {
-    clearTimeout(liveTimer);
-    if (!input.value.trim()) {
-      reset();
-      result.hidden = true;
+  // FEATURE 2
+  function copyImage() {
+    var canvas = qrBox.querySelector('canvas');
+    if (!canvas) return;
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      msg.textContent = 'Copying images is not supported here. Use Download instead.';
       return;
     }
-    liveTimer = setTimeout(generate, LIVE_DELAY);
+    canvas.toBlob(function (blob) {
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        .then(function () { flash(copyBtn, 'Copied!'); })
+        .catch(function () {
+          msg.textContent = 'Could not copy the image. Use Download instead.';
+        });
+    }, 'image/png');
+  }
+
+  // ---------- Events ----------
+  makeBtn.addEventListener('click', function () { generate(true); });
+  clearBtn.addEventListener('click', clearAll);
+  downloadBtn.addEventListener('click', download);
+  copyBtn.addEventListener('click', copyImage);
+
+  clearHistoryBtn.addEventListener('click', function () {
+    saveHistory([]);
+    renderHistory();
   });
-})();
+
+  input.addEventListener('keydown', function (e) {
+    if
