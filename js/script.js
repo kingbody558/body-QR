@@ -6,7 +6,8 @@
   var DARK_COLOR = '#000000';
   var LIGHT_COLOR = '#ffffff';
   var DOWNLOAD_NAME = 'qr-code.png';
-  var LIVE_DELAY = 400;
+  var LIVE_DELAY = 400;              // MOD 3: ms to wait after typing stops
+
   // ---------- Elements ----------
   var input = document.getElementById('input');
   var msg = document.getElementById('msg');
@@ -15,22 +16,24 @@
   var makeBtn = document.getElementById('make');
   var clearBtn = document.getElementById('clear');
   var downloadBtn = document.getElementById('download');
-  var LIVE_DELAY = 400;
+
+  var liveTimer = null;              // MOD 3: this was missing
+
   // ---------- Helpers ----------
   function showError(text) {
     msg.textContent = text;
     result.hidden = true;
   }
 
-// MOD 4: add https:// to things like "example.com"
-function normalizeLink(text) {
-  var looksLikeDomain = /^(?![a-z][a-z0-9+.-]*:)(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[\/?#]\S*)?$/i;
-  return looksLikeDomain.test(text) ? 'https://' + text : text;
-}
-  
   function reset() {
     msg.textContent = '';
     qrBox.innerHTML = '';
+  }
+
+  // MOD 4: add https:// to things like "example.com"
+  function normalizeLink(text) {
+    var looksLikeDomain = /^(?![a-z][a-z0-9+.-]*:)(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[\/?#]\S*)?$/i;
+    return looksLikeDomain.test(text) ? 'https://' + text : text;
   }
 
   // ---------- Actions ----------
@@ -84,12 +87,19 @@ function normalizeLink(text) {
   makeBtn.addEventListener('click', generate);
   clearBtn.addEventListener('click', clearAll);
   downloadBtn.addEventListener('click', download);
- input.addEventListener('input', function () {
-  clearTimeout(liveTimer);
-  if (!input.value.trim()) {
-    reset();
-    result.hidden = true;
-    return;
-  }
-  liveTimer = setTimeout(function () { generate(false); }, LIVE_DELAY);
-});
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate();
+  });
+
+  // MOD 3: live update while typing
+  input.addEventListener('input', function () {
+    clearTimeout(liveTimer);
+    if (!input.value.trim()) {
+      reset();
+      result.hidden = true;
+      return;
+    }
+    liveTimer = setTimeout(generate, LIVE_DELAY);
+  });
+})();
