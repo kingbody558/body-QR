@@ -15,6 +15,16 @@
       <label for="input">Link or text</label>
       <textarea id="input" placeholder="https://example.com"></textarea>
 
+      <!-- FEATURE 1: color pickers -->
+      <div class="row colors">
+        <label class="color">Code color
+          <input type="color" id="fgColor" value="#000000">
+        </label>
+        <label class="color">Background
+          <input type="color" id="bgColor" value="#ffffff">
+        </label>
+      </div>
+
       <div class="row">
         <button class="primary" id="make" type="button">Generate QR code</button>
         <button id="clear" type="button">Clear</button>
@@ -26,12 +36,22 @@
         <div class="qrbox" id="qr"></div>
         <div class="row center">
           <button id="download" type="button">Download PNG</button>
+          <!-- FEATURE 2: copy image -->
+          <button id="copy" type="button">Copy image</button>
         </div>
+      </div>
+
+      <!-- FEATURE 3: history -->
+      <div class="history" id="historyBox" hidden>
+        <div class="history-head">
+          <span>Recent</span>
+          <button id="clearHistory" type="button" class="link">Clear history</button>
+        </div>
+        <ul id="history"></ul>
       </div>
     </div>
   </main>
 
-  <!-- QR library (loaded from CDN). Replace with a local copy if you need offline use. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="js/script.js"></script>
 </body>
