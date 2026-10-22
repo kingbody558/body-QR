@@ -1,198 +1,181 @@
-/* ---------- Theme variables (MOD 1: purple and teal) ---------- */
-:root {
-  --bg: #f3efff;
-  --bg-gradient: linear-gradient(160deg, #f3efff 0%, #dff5f3 100%);
-  --surface: #ffffff;
-  --ink: #241b3a;
-  --muted: #645c7e;
-  --line: #d9d0f0;
-  --accent: #7c3aed;
-  --accent-ink: #ffffff;
-  --err: #b42318;
-  --radius: 10px;
-}
+(function () {
+  'use strict';
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #16112a;
-    --bg-gradient: linear-gradient(160deg, #16112a 0%, #0f2230 100%);
-    --surface: #211a3b;
-    --ink: #efeafc;
-    --muted: #a79fc4;
-    --line: #3a3160;
-    --accent: #a78bfa;
-    --accent-ink: #16112a;
-    --err: #ff8a80;
+  // ---------- Settings (edit these) ----------
+  var QR_SIZE = 280;                // MOD 5: bigger code
+  var DOWNLOAD_NAME = 'qr-code.png';
+  var HISTORY_KEY = 'qr-history';   // FEATURE 3
+  var MAX_HISTORY = 5;
+
+  // ---------- Elements ----------
+  var input = document.getElementById('input');
+  var msg = document.getElementById('msg');
+  var result = document.getElementById('result');
+  var qrBox = document.getElementById('qr');
+  var makeBtn = document.getElementById('make');
+  var clearBtn = document.getElementById('clear');
+  var downloadBtn = document.getElementById('download');
+  var copyBtn = document.getElementById('copy');                 // FEATURE 2
+  var fgInput = document.getElementById('fgColor');              // FEATURE 1
+  var bgInput = document.getElementById('bgColor');              // FEATURE 1
+  var historyBox = document.getElementById('historyBox');        // FEATURE 3
+  var historyList = document.getElementById('history');          // FEATURE 3
+  var clearHistoryBtn = document.getElementById('clearHistory'); // FEATURE 3
+
+  // ---------- Helpers ----------
+  function showError(text) {
+    msg.textContent = text;
+    result.hidden = true;
   }
-}
 
-/* ---------- Base ---------- */
-*, *::before, *::after { box-sizing: border-box; }
+  function reset() {
+    msg.textContent = '';
+    qrBox.innerHTML = '';
+  }
 
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  padding: 24px 16px;
-  background: var(--bg-gradient);   /* MOD 1 */
-  color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.5;
-}
+  function flash(btn, text) {
+    var old = btn.textContent;
+    btn.textContent = text;
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  }
 
-main { width: 100%; max-width: 460px; }
+  // MOD 4: add https:// to things like "example.com"
+  function normalizeLink(text) {
+    var looksLikeDomain = /^(?![a-z][a-z0-9+.-]*:)(?:[a-z0-9-]+\.)+[a-z]{2,}(?:[\/?#]\S*)?$/i;
+    return looksLikeDomain.test(text) ? 'https://' + text : text;
+  }
 
-h1 {
-  margin: 8px 0 6px;
-  font-size: 2rem;
-  letter-spacing: -0.02em;
-}
+  // ---------- History (FEATURE 3) ----------
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch (e) { return []; }
+  }
 
-.sub { margin: 0 0 20px; color: var(--muted); }
+  function saveHistory(list) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); }
+    catch (e) { /* storage unavailable: ignore */ }
+  }
 
-/* ---------- Panel & form ---------- */
-.panel {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 18px;
-}
+  function renderHistory() {
+    var list = loadHistory();
+    historyBox.hidden = list.length === 0;
+    historyList.innerHTML = '';
+    list.forEach(function (text) {
+      var li = document.createElement('li');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = text;
+      btn.title = text;
+      btn.addEventListener('click', function () {
+        input.value = text;
+        generate(false);
+      });
+      li.appendChild(btn);
+      historyList.appendChild(li);
+    });
+  }
 
-label { display: block; margin-bottom: 8px; font-weight: 500; }
+  function addHistory(text) {
+    var list = loadHistory().filter(function (t) { return t !== text; });
+    list.unshift(text);
+    saveHistory(list.slice(0, MAX_HISTORY));
+    renderHistory();
+  }
 
-textarea {
-  width: 100%;
-  min-height: 96px;
-  resize: vertical;
-  padding: 10px 12px;
-  font: inherit;
-  color: var(--ink);
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-}
+  // ---------- Actions ----------
+  // shouldSave = true only when the person clicks the button (not while typing)
+  function generate(shouldSave) {
+    var text = normalizeLink(input.value.trim());
+    reset();
 
-textarea:focus,
-button:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
+    if (!text) {
+      showError('Enter a link or some text first.');
+      return;
+    }
+    if (typeof QRCode === 'undefined') {
+      showError('The QR library did not load. Check your connection and reload.');
+      return;
+    }
 
-/* ---------- Buttons ---------- */
-.row { display: flex; gap: 10px; margin-top: 12px; }
-.row.center { justify-content: center; }
+    try {
+      new QRCode(qrBox, {
+        text: text,
+        width: QR_SIZE,
+        height: QR_SIZE,
+        colorDark: fgInput.value,    // FEATURE 1
+        colorLight: bgInput.value,   // FEATURE 1
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      qrBox.style.background = bgInput.value;
+      result.hidden = false;
+      if (shouldSave) addHistory(text);
+    } catch (err) {
+      console.error(err);
+      if (/overflow/i.test(String(err && err.message))) {
+        showError('That text is too long for a QR code. Shorten it and try again.');
+      } else {
+        showError('Something went wrong. Open the browser console (F12) to see the error.');
+      }
+    }
+  }
 
-button {
-  padding: 11px 16px;
-  font: inherit;
-  font-weight: 500;
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  cursor: pointer;
-}
+  function clearAll() {
+    input.value = '';
+    reset();
+    result.hidden = true;
+    input.focus();
+  }
 
-button.primary {
-  flex: 1;
-  color: var(--accent-ink);
-  background: var(--accent);
-  border-color: var(--accent);
-}
+  function download() {
+    var canvas = qrBox.querySelector('canvas');
+    if (!canvas) return;
+    var a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = DOWNLOAD_NAME;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
 
-/* MOD 2: pill buttons */
-button {
-  border-radius: 999px;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-}
-button:active {
-  transform: scale(0.98);
-  box-shadow: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  button { transition: none; }
-  button:hover { transform: none; }
-}
+  // FEATURE 2
+  function copyImage() {
+    var canvas = qrBox.querySelector('canvas');
+    if (!canvas) return;
+    if (!navigator.clipboard || !window.ClipboardItem) {
+      msg.textContent = 'Copying images is not supported here. Use Download instead.';
+      return;
+    }
+    canvas.toBlob(function (blob) {
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+        .then(function () { flash(copyBtn, 'Copied!'); })
+        .catch(function () {
+          msg.textContent = 'Could not copy the image. Use Download instead.';
+        });
+    }, 'image/png');
+  }
 
-/* ---------- Messages & result ---------- */
-.msg {
-  min-height: 1.4em;
-  margin: 10px 0 0;
-  color: var(--err);
-  font-size: 0.9rem;
-}
+  // ---------- Events ----------
+  makeBtn.addEventListener('click', function () { generate(true); });
+  clearBtn.addEventListener('click', clearAll);
+  downloadBtn.addEventListener('click', download);
+  copyBtn.addEventListener('click', copyImage);
 
-.result { margin-top: 18px; text-align: center; }
+  clearHistoryBtn.addEventListener('click', function () {
+    saveHistory([]);
+    renderHistory();
+  });
 
-.qrbox {
-  display: inline-block;
-  padding: 14px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-}
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate(true);
+  });
 
-.qrbox img,
-.qrbox canvas { display: block; max-width: 100%; height: auto; }
+  // FEATURE 1: redraw when a color changes
+  [fgInput, bgInput].forEach(function (picker) {
+    picker.addEventListener('input', function () {
+      if (!result.hidden) generate(false);
+    });
+  });
 
-/* MOD 5: result reveal */
-.result:not([hidden]) { animation: reveal 0.35s ease-out; }
-@keyframes reveal {
-  from { opacity: 0; transform: scale(0.92); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .result:not([hidden]) { animation: none; }
-}
-
-/* FEATURE 1: color pickers */
-.colors { align-items: center; flex-wrap: wrap; }
-label.color {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-weight: 400;
-}
-input[type="color"] {
-  width: 40px;
-  height: 32px;
-  padding: 0;
-  background: none;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* FEATURE 3: history */
-.history {
-  margin-top: 18px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-.history-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 500;
-}
-.history ul { list-style: none; margin: 8px 0 0; padding: 0; }
-.history li button {
-  width: 100%;
-  padding: 8px;
-  text-align: left;
-  border: 0;
-  border-radius: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.history li button:hover { background: var(--bg); transform: none; box-shadow: none; }
-button.link { border: 0; padding: 4px 8px; color: var(--muted); font-size: 0.85rem; }
-
-[hidden] { display: none !important; }
+  // Show saved history on page load
+  renderHistory();
+})();
