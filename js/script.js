@@ -4,7 +4,6 @@
   // ---------- Settings (edit these) ----------
   var QR_SIZE = 280;                // MOD 5: bigger code
   var DOWNLOAD_NAME = 'qr-code.png';
-  var LIVE_DELAY = 400;             // MOD 3: ms to wait after typing stops
   var HISTORY_KEY = 'qr-history';   // FEATURE 3
   var MAX_HISTORY = 5;
 
@@ -22,8 +21,6 @@
   var historyBox = document.getElementById('historyBox');        // FEATURE 3
   var historyList = document.getElementById('history');          // FEATURE 3
   var clearHistoryBtn = document.getElementById('clearHistory'); // FEATURE 3
-
-  var liveTimer = null;
 
   // ---------- Helpers ----------
   function showError(text) {
@@ -86,7 +83,7 @@
   }
 
   // ---------- Actions ----------
-  // shouldSave = true only when the person clicks the button (not while typing)
+  // shouldSave = true only when the person clicks the button
   function generate(shouldSave) {
     var text = normalizeLink(input.value.trim());
     reset();
@@ -164,4 +161,16 @@
   });
 
   input.addEventListener('keydown', function (e) {
-    if
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generate(true);
+  });
+
+  // FEATURE 1: redraw when a color changes
+  [fgInput, bgInput].forEach(function (picker) {
+    picker.addEventListener('input', function () {
+      if (!result.hidden) generate(false);
+    });
+  });
+
+  // Show saved history on page load
+  renderHistory();
+})();
